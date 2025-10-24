@@ -1,30 +1,38 @@
-import { useState } from "react"
+// Form for adding a new director
+// Uses programmatic navigation and updates shared director state
+
+import { useState } from "react";
+import { useNavigate, useOutletContext } from "react-router-dom";
+import { v4 as uuid } from "uuid";
 
 function DirectorForm() {
-  const [name, setName] = useState("")
-  const [bio, setBio] = useState("")
+  // Local state for the form inputs
+  const [name, setName] = useState("");
+  const [bio, setBio] = useState("");
+
+  // Access state updater + navigation
+  const navigate = useNavigate();
+  const { setDirectors } = useOutletContext();
 
   const handleSubmit = (e) => {
-    e.preventDefault()
-    const newDirector = { name, bio, movies: [] }
-    fetch("http://localhost:4000/directors", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(newDirector)
-    })
-    .then(r => {
-        if (!r.ok) { throw new Error("failed to add director")}
-        return r.json()
-    })
-    .then(data => {
-        console.log(data)
-        // handle context/state changes
-        // navigate to newly created director page
-    })
-    .catch(console.log)
-  }
+    e.preventDefault();
+
+    // Create new director object
+    const newDirector = { id: uuid(), name, bio, movies: [] };
+
+    // Update parent state right away
+    setDirectors((prev) => (prev ? [...prev, newDirector] : [newDirector]));
+
+    // Optional POST request to persist new director
+    fetch("/directors", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newDirector),
+    }).catch(() => {});
+
+    // Navigate directly to the new director’s page
+    navigate(`/directors/${newDirector.id}`);
+  };
 
   return (
     <div>
@@ -46,7 +54,7 @@ function DirectorForm() {
         <button type="submit">Add Director</button>
       </form>
     </div>
-  )
+  );
 }
 
-export default DirectorForm
+export default DirectorForm;
